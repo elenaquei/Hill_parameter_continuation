@@ -45,7 +45,7 @@ Zero_finding_problem_vector = @(vec) Zero_finding_problem(vec(1:dim),vec(dim+1),
 approx_vec = rand(3*dim+2,1);
 
 % finding a first approximation for the fixed point with a "low" n
-n_temp = 2;
+n_temp = 3;
 x = Newton_handle(@(x)vector_field(x,n_temp),[1,1,1]',@(x) Dx_vector_field(x,n_temp));
 
 % use the first approximation to find the eigenvalue and eigenvector match
@@ -62,9 +62,6 @@ approx_vec(11) = imag(lambda);
 
 % look for a better solution
 true_sol = Newton_handle(Zero_finding_problem_vector,approx_vec);
-
-
-% seems to be stupidly sestivie on initial conditions! (all of them)
 
  
 

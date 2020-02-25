@@ -12,15 +12,13 @@ for i = 1:max_iter
     DF = DF_func(approx);
     F = function_handle(approx);
     rcond_DF = rcond(DF);
-    if abs(rcond_DF)>10^6 || abs(rcond_DF)<10^-6 || isnan(rcond_DF) || isinf(rcond_DF)
-        error('RCOND not good')
+    if abs(rcond_DF)>10^12 || abs(rcond_DF)<10^-12 || isnan(rcond_DF) || isinf(rcond_DF)
+        error('RCOND not good, %e',rcond_DF)
     end
     step = - DF \ F ;
+    fprintf('Norm of stepsize %e at iteration %i\n',norm(step),i)
     if i>1 && norm(step)<tol 
-        fprintf('Norm of stepsize %e at iteration %i\n',norm(step),i)
         return
-    else
-        fprintf('Norm of stepsize %e at iteration %i\n',norm(step),i)
     end
     zero_approx = approx + step;
     %zero_approx(1:3) = max(zero_approx(1:3),0);
