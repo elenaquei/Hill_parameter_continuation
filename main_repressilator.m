@@ -9,11 +9,11 @@ l = [0 0 0];
 u = [2 2 2];
 % using the data to construct Hill functions
 [H_minus1, dnH_minus1, dxH_minus1, dxxH_minus1, dxnH_minus1] = ...
-    Hill_minus(theta(2),l(2),u(2));
+    hillcomponent('-', theta(2),l(2), u(2)-l(2));
 [H_minus2, dnH_minus2, dxH_minus2, dxxH_minus2, dxnH_minus2] = ...
-    Hill_minus(theta(3),l(3),u(3));
+    hillcomponent('-', theta(3),l(3), u(3)-l(3));
 [H_minus3, dnH_minus3, dxH_minus3, dxxH_minus3, dxnH_minus3] = ...
-    Hill_minus(theta(1),l(1),u(1));
+    hillcomponent('-', theta(1),l(1), u(1)-l(1));
 
 % assembly the Hill functions
 H_minus= @(x,n) [H_minus1(x(2),n);

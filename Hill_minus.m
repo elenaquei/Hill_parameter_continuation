@@ -13,7 +13,7 @@ function [H, dnH, dxH, dxxH, dxnH] = Hill_minus(theta,l,u)
 % dxnH
 % dxxH
 % dnnH
-
+warning('deprecated')
 %[H_plus, dnH_plus, dxH_plus, dxxH_plus, dxnH_plus] = Hill_plus(theta,l,u);
 H = @(x,n) l + (u-l)*(theta^n)/(x^n+theta^n);
 dnH = @(x,n) (u-l)*theta^n*x^n*(log(theta)-log(x))./(x.^n+theta.^n).^2;
