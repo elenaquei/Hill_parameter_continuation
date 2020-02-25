@@ -14,10 +14,9 @@ function [H, dnH, dxH, dxxH, dxnH] = Hill_minus(theta,l,u)
 % dxxH
 % dnnH
 
-
-[H_plus, dnH_plus, dxH_plus, dxxH_plus, dxnH_plus] = Hill_plus(theta,l,u);
-H = @(x,n) H_plus(x, n);
-dnH = @(x,n) - dnH_plus(x,n);
-dxnH = @(x, n) - dxnH_plus(x,n);
-dxH = @(x, n) - dxH_plus(x,n);
-dxxH = @(x, n) - dxxH_plus(x,n);
+%[H_plus, dnH_plus, dxH_plus, dxxH_plus, dxnH_plus] = Hill_plus(theta,l,u);
+H = @(x,n) l + (u-l)*(theta^n)/(x^n+theta^n);
+dnH = @(x,n) (u-l)*theta^n*x^n*(ln(theta)-ln(x))./(x.^n+theta.^n).^2;
+dxnH = @(x, n) (u-l)*(theta^n*x^(n-1)*(n*log(theta/x)*(theta^n-x^n)+(theta^n+x^n)))/(x^n+theta^n)^3;
+dxH = @(x, n)(u-l)* n*theta^n*x^(n-1)/(theta^n+x^n)^2;
+dxxH = @(x, n)(u-l)* n*theta^n*x^(n-2)*( theta^n*(n-1)-x^n*(n+1))/(theta^n+x^n)^3;
