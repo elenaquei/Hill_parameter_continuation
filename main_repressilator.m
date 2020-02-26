@@ -3,7 +3,8 @@
 
 % building the vector field takes quite a while (lines 5-30)
 dim = 3;
-Gamma = diag(ones(dim,1));
+gamma = ones(dim,1);
+Gamma = diag(gamma);
 theta = [1 1 1]; 
 l = [0 0 0];
 u = [2 2 2];
@@ -23,6 +24,10 @@ H_minus= @(x,n) [H_minus1(x(2),n);
 dxH_minus = @(x,n)[ 0                   dxH_minus1(x(2),n)  0
                     0                   0                   dxH_minus2(x(3),n)
                     dxH_minus3(x(1),n)  0                   0];
+
+dnH_minus = @(x,n) [dnH_minus1(x(2),n)
+                dnH_minus1(x(3),n)
+                dnH_minus1(x(1),n)];
 
 % writing the full vector field
 vector_field = @(x,n) -Gamma*x + H_minus(x,n);
@@ -50,8 +55,8 @@ x = Newton_handle(@(x)vector_field(x,n_temp),[1,1,1]',@(x) Dx_vector_field(x,n_t
 
 % use the first approximation to find the eigenvalue and eigenvector match
 n_temp=4.2;
-[v,l]= eig(Dx_vector_field(x,n_temp));
-lambda= l(end);
+[v,eig_loc]= eig(Dx_vector_field(x,n_temp));
+lambda= eig_loc(end);
 v_comp = v(:,end);
 
 approx_vec(1:3) = x;
@@ -62,6 +67,3 @@ approx_vec(11) = imag(lambda);
 
 % look for a better solution
 true_sol = Newton_handle(Zero_finding_problem_vector,approx_vec);
-
- 
-
