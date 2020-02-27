@@ -97,6 +97,9 @@ gradient_min_func= @(y) [y(24:34)*Ds(y(1:23))
 starting_vec_for_minimization = [vector_data,rand(1,11)];
 
 % actual minimization w.r.t. lambda and n
-xn = gradient_descent1D(minimization_func_vector,gradient_min_func,starting_vec_for_minimization);
- 
+% xn = gradient_descent1D(minimization_func_vector,gradient_min_func,starting_vec_for_minimization);
+% FMINSEARCH!
+
+starting_vec_for_minimization = [vector_data,rand(1,11)];
+xn = fminsearch(minimization_func_vector,starting_vec_for_minimization);
 
