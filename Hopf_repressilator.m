@@ -33,11 +33,11 @@ end
 Gamma = diag(gamma);
 
 % using the data to construct Hill functions
-[H_minus1, dnH_minus1, dxH_minus1, dxxH_minus1, dxnH_minus1] = ...
+[H_minus1, ~, dxH_minus1] = ...
     hillcomponent('-', theta(2),l(2), u(2)-l(2));
-[H_minus2, dnH_minus2, dxH_minus2, dxxH_minus2, dxnH_minus2] = ...
+[H_minus2, ~, dxH_minus2] = ...
     hillcomponent('-', theta(3),l(3), u(3)-l(3));
-[H_minus3, dnH_minus3, dxH_minus3, dxxH_minus3, dxnH_minus3] = ...
+[H_minus3, ~, dxH_minus3] = ...
     hillcomponent('-', theta(1),l(1), u(1)-l(1));
 
 % assembly the Hill functions
@@ -49,41 +49,37 @@ dxH_minus = @(x,n)[ 0                   dxH_minus1(x(2),n)  0
                     0                   0                   dxH_minus2(x(3),n)
                     dxH_minus3(x(1),n)  0                   0];
 
-dnH_minus = @(x,n) [dnH_minus1(x(2),n)
-                dnH_minus1(x(3),n)
-                dnH_minus1(x(1),n)];
-
 % writing the full vector field
 vector_field = @(x,n) -Gamma*x + H_minus(x,n);
 Dx_vector_field = @(x,n) -Gamma + dxH_minus(x,n);
-Dn_vector_field = @(x,n) dnH_minus(x,n);
 
-eigen_cond_real = @(x,n,w,z,lambda) Dx_vector_field(x,n)*w + z*lambda;
-eigen_cond_imag = @(x,n,w,z,lambda) Dx_vector_field(x,n)*z - w*lambda;
+eigen_cond_real = @(x,n,w,z,beta) Dx_vector_field(x,n)*w + z*beta;
+eigen_cond_imag = @(x,n,w,z,beta) Dx_vector_field(x,n)*z - w*beta;
 
-amplitude_cond = @(x,n,w,z,lambda) [sum(w.^2+z.^2) - 1;
-            sum(w.*z)];
+amplitude_cond = @(w,z) [sum(w.^2+z.^2) - 1;
+            2*sum(w.*z)];
 
-Zero_finding_problem = @(x,n,w,z,lambda) [vector_field(x,n);
-    eigen_cond_real(x,n,w,z,lambda);
-    eigen_cond_imag(x,n,w,z,lambda);
-    amplitude_cond(x,n,w,z,lambda)];
+Zero_finding_problem = @(x,n,w,z,beta) [vector_field(x,n);
+    eigen_cond_real(x,n,w,z,beta);
+    eigen_cond_imag(x,n,w,z,beta);
+    amplitude_cond(w,z)];
 
-Zero_finding_problem_vector = @(vec) Zero_finding_problem(vec(1:dim),vec(dim+1),vec(dim+1+(1:dim)),vec(2*dim+1+(1:dim)),vec(3*dim+2));
-
-approx_vec = rand(3*dim+2,1);
+Zero_finding_problem_vector = @(vec) Zero_finding_problem...
+    (vec(1:dim),vec(dim+1),vec(dim+1+(1:dim)),vec(2*dim+1+(1:dim)),vec(3*dim+2));
 
 % finding a first approximation for the fixed point with a "low" n
-n_temp = 3;
+n_temp=4.2;%n_temp=4.8;%n_temp=4.2;%n_temp = 3;
 x = Newton_handle(@(x)vector_field(x,n_temp),[1,1,1]',@(x) Dx_vector_field(x,n_temp));
 
 % use the first approximation to find the eigenvalue and eigenvector match
-n_temp=4.2;
+n_temp=4.2;%n_temp=4.8;
 [v,eig_loc]= eig(Dx_vector_field(x,n_temp));
-lambda= eig_loc(end);
-v_comp = v(:,end);
+all_eigs= diag(eig_loc);
+[~,index] = min(abs(real(all_eigs)));
+beta = all_eigs(index); 
+v_comp = v(:,index);
 
-approx_vec = [x,n_temp,real(v_comp),imag(v_comp), imag(lambda)];
+approx_vec = [x;n_temp;real(v_comp);imag(v_comp);imag(beta)];
 
 % look for a better solution
 true_sol = Newton_handle(Zero_finding_problem_vector,approx_vec);
