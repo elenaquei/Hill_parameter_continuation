@@ -23,9 +23,11 @@
 % % }"]
 % that I think corresponds to l < theta < u
 gamma = [1 1 1];
-theta = [1 1 1];
+theta = [1 1 1]-0.2;
 l = [0 0 0]+0.5; 
 u = [2 2 2];
+
+
 
 % find the Hopf position at given values of the parameters
 % [x,n,v1,v2,beta] = Hopf_repressilator(gamma, theta, l, u);
@@ -36,18 +38,12 @@ u = [2 2 2];
 % structuring the problem: defining the Hill function w.r.t all the
 % parameters and its derivative w.r.t. anything I could think of
 
-H = @(n,x,theta,ell,u)ell + (u-ell)*theta.^n./(theta.^n + x.^n);
-dnH = @(n,x,theta,ell,u)(u-ell).*theta.^n.*x.^n.*(log(theta) - log(x))./(theta.^n + x.^n).^2; % use difference of logs to avoid complex valued log evaluations due to roundoff error
+H = @(n,x,theta,ell,u) ell + (u-ell)*theta.^n./(theta.^n + x.^n);
 dxH = @(n,x,theta,ell,u)-n.*(u-ell).*theta.^n.*x^(n-1)./(theta.^n + x.^n).^2;
-dxxH = @(n,x,theta,ell,u)-n.*(u-ell).*theta.^n.*x.^(n-2).*((n-1).*theta.^n - (n+1).*x.^n)./(theta.^n+x.^n).^3;
-dxnH = @(n,x,theta,ell,u)(u-ell).*theta.^n.*x.^(n-1).*(n.*(theta.^n - x.^n).*(log(theta) - log(x)) - theta.^n - x.^n)./(theta.^n + x.^n).^3;
-dthetaH = @(n,x,theta,ell,u)n.*(u-ell).*x.^n.*theta^(n-1)./(theta.^n + x.^n).^2;
-dlH = @(n,x,theta,ell,u) 1 - theta.^n./(theta.^n + x.^n);
-duH = @(n,x,theta,ell,u) theta.^n./(theta.^n + x.^n);
-d_thetalu_H = @(n,x,theta,ell,u) [dthetaH(n,x,theta,ell,u), dlH(n,x,theta,ell,u), duH(n,x,theta,ell,u)];
 
 % the repressilator vector field
-vector_field = @(n,x,lambda) - diag(lambda(1:3))*x.' + 0*[ H(n,x(3), lambda(10),lambda(11),lambda(12))
+vector_field = @(n,x,lambda) -diag(lambda(1:3))*x + ...
+    [H(n,x(3), lambda(10),lambda(11),lambda(12))
     H(n,x(2), lambda(7),lambda(8),lambda(9))
     H(n,x(1), lambda(4),lambda(5),lambda(6))];
 
@@ -57,46 +53,57 @@ DxVF = @(n,x,lambda) - diag(lambda(1:3)) + ...
     0 dxH(n,x(2), lambda(7),lambda(8),lambda(9))  0
     dxH(n,x(1), lambda(4),lambda(5),lambda(6)) 0 0];
 
-% MORE derivatives! %%
-DnVF = @(n,x,lambda)[ dnH(n,x(3), lambda(10),lambda(11),lambda(12))
-    dnH(n,x(2), lambda(7),lambda(8),lambda(9))
-    dnH(n,x(1), lambda(4),lambda(5),lambda(6))];
-
-DparVFH = @(n,x,lambda) [0 0 0 0 0 0 d_thetalu_H(n,x(3),lambda(10),lambda(11),lambda(12))
-    0 0 0 d_thetalu_H(n,x(2), lambda(7), lambda(8), lambda(9)) 0 0 0
-    d_thetalu_H(n,x(1), lambda(4), lambda(5), lambda(6)) 0 0 0 0 0 0];
-
-DlambdaVF = @(n,x,lambda)cat(2,...
-    [-x(1) 0 0
-    0 -x(2) 0
-    0 0 -x(3)],DparVFH(n,x,lambda));
-
-full_der_VF = @(n,x,lambda)...
-    [DnVF(n,x,lambda), DxVF(n,x,lambda), DlambdaVF(n,x,lambda) zeros(3,3*2+1)];
-
-full_der_eigen_prob = @(n,x,lambda,v1,v2,beta)...
-    [DxnVF(n,x,lambda)* v1' DxxVF(n,x,lambda,v1)  DlambdaxVF(n,x,lambda, v1) DxVF(n,x,lambda) beta*(1+0*v1')   v2'
-    DxnVF(n,x,lambda)* v2' DxxVF(n,x,lambda,v2)  DlambdaxVF(n,x,lambda, v2) -beta*(1+0*v1')  DxVF(n,x,lambda) -v1'];
-
-full_der_amplitude = @(n,x,lambda,v1,v2,beta)[0 0 0 0 0*lambda 2*v1 2*v2 0
-    0 0 0 0 0*lambda   v2   v1 0];
-
-e1 = zeros(34,1);
-e1(1) = 1;
-
-der_full_problem = @(n,x,lambda,v1,v2,beta) [full_der_vector_field(n,x,lambda)
-    full_der_eigen_prob(n,x,lambda,v1,v2,beta)
-    full_der_amplitude(v1,v2)];
-
-der_full_problem_vector = @(x) der_full_problem(x(1),x(2:4),x(5:16),x(17:19),x(20:22),x(23));
-
-gradient_min_func = @(y) [y(24:34)*Ds(y(1:23))
-    full_problem_vector(y(1:23))]+e1;
-% end of unused derivatives
+% % MORE derivatives! %%% not needed right now
+% %
+% dnH = @(n,x,theta,ell,u)(u-ell).*theta.^n.*x.^n.*(log(theta) - log(x))./(theta.^n + x.^n).^2; 
+% use difference of logs to avoid complex valued log evaluations due to roundoff error
+% dxxH = @(n,x,theta,ell,u)-n.*(u-ell).*theta.^n.*x.^(n-2).*((n-1).*theta.^n - (n+1).*x.^n)./(theta.^n+x.^n).^3;
+% dxnH = @(n,x,theta,ell,u)(u-ell).*theta.^n.*x.^(n-1).*(n.*(theta.^n - x.^n).*(log(theta) - log(x)) - theta.^n - x.^n)./(theta.^n + x.^n).^3;
+% dthetaH = @(n,x,theta,ell,u)n.*(u-ell).*x.^n.*theta^(n-1)./(theta.^n + x.^n).^2;
+% dlH = @(n,x,theta,ell,u) 1 - theta.^n./(theta.^n + x.^n);
+% duH = @(n,x,theta,ell,u) theta.^n./(theta.^n + x.^n);
+% d_thetalu_H = @(n,x,theta,ell,u) [dthetaH(n,x,theta,ell,u), dlH(n,x,theta,ell,u), duH(n,x,theta,ell,u)];
+% 
+% DnVF = @(n,x,lambda)[ dnH(n,x(3), lambda(10),lambda(11),lambda(12))
+%     dnH(n,x(2), lambda(7),lambda(8),lambda(9))
+%     dnH(n,x(1), lambda(4),lambda(5),lambda(6))];
+% 
+% DparVFH = @(n,x,lambda) [0 0 0 0 0 0 d_thetalu_H(n,x(3),lambda(10),lambda(11),lambda(12))
+%     0 0 0 d_thetalu_H(n,x(2), lambda(7), lambda(8), lambda(9)) 0 0 0
+%     d_thetalu_H(n,x(1), lambda(4), lambda(5), lambda(6)) 0 0 0 0 0 0];
+% 
+% DlambdaVF = @(n,x,lambda)cat(2,...
+%     [-x(1) 0 0
+%     0 -x(2) 0
+%     0 0 -x(3)],DparVFH(n,x,lambda));
+% 
+% full_der_VF = @(n,x,lambda)...
+%     [DnVF(n,x,lambda), DxVF(n,x,lambda), DlambdaVF(n,x,lambda) zeros(3,3*2+1)];
+% 
+% full_der_eigen_prob = @(n,x,lambda,v1,v2,beta)...
+%     [DxnVF(n,x,lambda)* v1' DxxVF(n,x,lambda,v1)  DlambdaxVF(n,x,lambda, v1) DxVF(n,x,lambda) beta*(1+0*v1')   v2'
+%     DxnVF(n,x,lambda)* v2' DxxVF(n,x,lambda,v2)  DlambdaxVF(n,x,lambda, v2) -beta*(1+0*v1')  DxVF(n,x,lambda) -v1'];
+% 
+% full_der_amplitude = @(n,x,lambda,v1,v2,beta)[0 0 0 0 0*lambda 2*v1 2*v2 0
+%     0 0 0 0 0*lambda   v2   v1 0];
+% 
+% e1 = zeros(34,1);
+% e1(1) = 1;
+% 
+% der_full_problem = @(n,x,lambda,v1,v2,beta) [full_der_vector_field(n,x,lambda)
+%     full_der_eigen_prob(n,x,lambda,v1,v2,beta)
+%     full_der_amplitude(v1,v2)];
+% 
+% der_full_problem_vector = @(x) der_full_problem(x(1),x(2:4),x(5:16),x(17:19),x(20:22),x(23));
+% 
+% gradient_min_func = @(y) [y(24:34)*Ds(y(1:23))
+%     full_problem_vector(y(1:23))]+e1;
+% %
+% % end of unused derivatives
 
 % eigenvalue problem for Hopf 
-eigen_prob = @(n,x,lambda,v1,v2,beta) [ DxVF(n,x,lambda) * v1' + beta * v2'
-    DxVF(n,x,lambda) * v2' - beta * v1'];
+eigen_prob = @(n,x,lambda,v1,v2,beta) [ DxVF(n,x,lambda) * v1 + beta * v2
+    DxVF(n,x,lambda) * v2 - beta * v1];
 
 % complex amplitude of the eigenvalue being 1
 amplitude = @(v1,v2) [sum(v1.^2+v2.^2)-1
@@ -108,15 +115,38 @@ full_problem = @(n,x,lambda,v1,v2,beta) ...
     eigen_prob(n,x,lambda,v1,v2,beta)
     amplitude(v1,v2)];
 
+
 % turning the input into a vector
 full_problem_vector = @(x) full_problem(x(1),x(2:4),x(5:16),x(17:19),x(20:22),x(23));
 
+full_problem_parameters = @(y, lambda) full_problem(y(1),y(2:4),lambda, y(5:7),y(8:10),y(11));
+
+par = [1,1,1,1.1,1.2,1.3,0.5,0.6,0.7,2.1,2.4,2.7];
+
+vector_field_par = @(y) vector_field(y(1),y(2:4),par);
+H_par = @(y) H(y(1),y(2), theta(1), l(1), u(1));
+
+full_problem_fixed_par = @(y) full_problem_parameters(y,par);
+
+approx_sol = [1,[1.1,1.2,1.3],[1,2,3],[4,5,6],3]';
+true_sol = Newton_handle(full_problem_fixed_par,approx_sol);
+
+return
 % lagrange multipliers, with square to ensure positivity
 minimization_func = @(n,x,lambda,v1,v2,beta,l) n + l * full_problem(n,x,lambda,v1,v2,beta);
 minimization_func_vector = @(x) minimization_func(x(1),x(2:4),x(5:16),x(17:19),x(20:22),x(23),x(24:34)).^2;
 % the lagrange multiplier l needs to be of length 11
 
-for i = 1:500
+approx_grad_f = @(x) approx_grad(minimization_func_vector,x,34).';
+
+N_iter = 10;
+counter_fails_not_hopf = 0;
+counter_fails_neg = 0;
+for i = 1:N_iter
+    if mod(i,100)==1 && i>1
+        fprintf('Reached iteration %i\n',i-1)
+    end
+    
     % set up random initial points 
     gamma = rand(1,3);
     l = rand(1,3);
@@ -135,7 +165,11 @@ for i = 1:500
     
     % do the minimization of the langrange function 
     starting_vec_for_minimization = [vector_data,ones(1,11)];
-    xn = fminsearch(minimization_func_vector,starting_vec_for_minimization);
+    %[xn,FVAL,EXITFLAG,OUTPUT] = fminsearch(minimization_func_vector,starting_vec_for_minimization);
+    
+    xn = gradient_descent1D(minimization_func_vector,...
+        approx_grad_f,starting_vec_for_minimization);
+    
     
     % check the data
     n = xn(1);
@@ -147,17 +181,31 @@ for i = 1:500
     ls = parameters_mat(3,:);
     us = parameters_mat(4,:);
     if any(all_parameters<0)
-        warning('Negative parameters at iteration %i', i)
+        %warning('Negative parameters at iteration %i', i)
+        counter_fails_neg = counter_fails_neg + 1;
         continue
     elseif any(x<0)
-        warning('Negative fixed point at iteration %i', i)
+        %warning('Negative fixed point at iteration %i', i)
+        counter_fails_neg = counter_fails_neg + 1;
         continue
     elseif any(n<0)
-        warning('Negative exponent at iteration %i', i)
+        %warning('Negative exponent at iteration %i', i)
+        counter_fails_neg = counter_fails_neg + 1;
         continue
+    elseif norm(full_problem_vector(xn(1:23)))>10^-5
+        counter_fails_not_hopf = counter_fails_not_hopf +1;
+        continue %error('Not a Hopf')
     end
     
     % show off the data
     plot(sum(xn(2:end)),n,'b.','MarkerSize',13)
-    hold on;
+    hold on; 
 end
+
+if counter_fails_not_hopf+counter_fails_neg == N_iter
+    error('Not even one point to plot!')
+else
+    disp('Well done, at least once you succeeded, you can pat yourself on the back')
+end
+
+
